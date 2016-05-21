@@ -10,7 +10,9 @@
   "author": "Josemar Magalhaes",
   "license": "ISC",
   "dependencies": {
+    "handlebars": "^4.0.5",
     "hapi": "^8.0.0",
+    "joi": "^8.1.0",
     "uuid": "^2.0.2"
   }
 }
