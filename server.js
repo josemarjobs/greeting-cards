@@ -2,6 +2,7 @@ var Hapi = require('hapi');
 var uuid = require('uuid');
 var fs = require('fs');
 var Joi = require('joi');
+var Boom = require('boom');
 
 var server = new Hapi.Server();
 
@@ -16,9 +17,48 @@ server.views({
   path: './templates'
 })
 
+server.register({
+  register: require('good'),
+  options: {
+    opsInterval: 5000,
+    reporters: [{
+      reporter: require('good-file'),
+      events: {ops: '*'},
+      config: {
+        path: './logs',
+        prefix: 'hapi-process',
+        rotate: 'daily'
+      }
+    },{
+      reporter: require('good-file'),
+      events: {response: '*'},
+      config: {
+        path: './logs',
+        prefix: 'hapi-requests',
+        rotate: 'daily'
+      }
+    },{
+      reporter: require('good-file'),
+      events: {errors: '*'},
+      config: {
+        path: './logs',
+        prefix: 'hapi-errors',
+        rotate: 'daily'
+      }
+    }]
+  }
+}, (err) => {console.log(err)})
+
 server.ext('onRequest', function(request, reply) {
   console.log(request.method.toUpperCase(),
             'Request received: ' + request.path);
+  reply.continue();
+});
+
+server.ext('onPreResponse', function(request, reply) {
+  if (request.response.isBoom) {
+    return reply.view('error', request.response)
+  }
   reply.continue();
 });
 
@@ -74,7 +114,7 @@ function newCardHandler(request, reply) {
     Joi.validate(request.payload, cardSchema, function(err, val) {
       if (err) {
         console.log(err);
-        return reply(err);
+        return reply(Boom.badRequest(err.details[0].message));
       }
       var card = {
         name: val.name,
