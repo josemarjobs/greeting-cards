@@ -1,9 +1,11 @@
 var Hapi = require('hapi');
 var CardStore = require('./lib/cardStore');
+var UserStore = require('./lib/userStore');
 
 var server = new Hapi.Server();
 
 CardStore.initialize();
+UserStore.initialize();
 
 server.connection({port: 3000});
 
@@ -44,7 +46,22 @@ server.register({
       }
     }]
   }
-}, (err) => {console.log(err)})
+}, (err) => {
+  if(err)console.log(err)
+})
+
+server.register(require('hapi-auth-cookie'), (err)=>{
+  if(err){console.log(err)}
+
+  server.auth.strategy('default', 'cookie', {
+    password: 'myPassword',
+    redirectTo: '/login',
+    isSecure: false
+  });
+
+  server.auth.default('default');
+
+});
 
 server.ext('onRequest', function(request, reply) {
   console.log(request.method.toUpperCase(),
