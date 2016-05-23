@@ -66,6 +66,7 @@ server.register(require('hapi-auth-cookie'), (err)=>{
 server.ext('onRequest', function(request, reply) {
   console.log(request.method.toUpperCase(),
             'Request received: ' + request.path);
+  console.log("Current User:", request.auth.credentials);
   reply.continue();
 });
 
